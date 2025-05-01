@@ -1,0 +1,8 @@
+.DS_Store
+*/xcshareddata/IDEWorkspaceChecks.plist
+xcuserdata/
+Artifacts/
+private_keys/
+Certificates/
+Configurations/Signing.xcconfig
+Bemol/Resources/sound_font.sf2

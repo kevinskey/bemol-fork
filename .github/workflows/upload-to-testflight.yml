@@ -34,7 +34,9 @@ jobs:
       # https://docs.github.com/en/actions/deployment/deploying-xcode-applications/installing-an-apple-certificate-on-macos-runners-for-xcode-development
       env:
         DEVELOPMENT_CERTIFICATE: ${{ secrets.DEVELOPMENT_CERTIFICATE }}
+        DEVELOPMENT_CERTIFICATE_PASSPHRASE: ${{ secrets.DEVELOPMENT_CERTIFICATE_PASSPHRASE }}
         DISTRIBUTION_CERTIFICATE: ${{ secrets.DISTRIBUTION_CERTIFICATE }}
+        DISTRIBUTION_CERTIFICATE_PASSPHRASE: ${{ secrets.DISTRIBUTION_CERTIFICATE_PASSPHRASE }}
         KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
       run: |
         development_certificate=$RUNNER_TEMP/BemolDevelopmentCertificate.p12
@@ -48,8 +50,8 @@ jobs:
         security set-keychain-settings -lut 21600 $keychain_path
         security unlock-keychain -p "$KEYCHAIN_PASSWORD" $keychain_path
 
-        security import $development_certificate -P "" -A -t cert -f pkcs12 -k $keychain_path
-        security import $distribution_certificate -P "" -A -t cert -f pkcs12 -k $keychain_path
+        security import $development_certificate -P "$DEVELOPMENT_CERTIFICATE_PASSPHRASE" -A -t cert -f pkcs12 -k $keychain_path
+        security import $distribution_certificate -P "$DISTRIBUTION_CERTIFICATE_PASSPHRASE" -A -t cert -f pkcs12 -k $keychain_path
   
         security list-keychain -d user -s $keychain_path
   

@@ -16,6 +16,7 @@
 - [For developers](#for-developers)
   - [How to build and run](#how-to-build-and-run)
   - [How to run the tests](#how-to-run-the-tests)
+  - [How to ship](#how-to-ship)
 
 # Background
 
@@ -74,8 +75,21 @@ Once released to the App Store, **Bemol** will be **free forever** (just like th
 
 ## How to run the tests
 
-Simply **Product** -> **Test** in Xcode.
+- **Product** -> **Test** in Xcode.
+- Or run `./Scripts/test.sh` from the command line. The tests results bundle will then be available at `Artifacts/test-results.xcresult`.
+
+## How to ship
+
+Run `./Scripts/upload_to_testflight.sh <marketing_version> <build_version>` to archive and upload a new build to App Store Connect. `./Scripts/next_marketing_version.sh` and `./Scripts/next_build_version.sh` can be used to automatically generate the required arguments.
+
+The script expects the following environment variables to be set:
+
+- `APPLE_ID`
+- `APP_STORE_CONNECT_API_KEY`
+- `APP_STORE_CONNECT_API_ISSUER`
+
+These are self-explanatory and their values can be found in App Store Connect. The script also expects a private key file to be available at `./private_keys/AuthKey_<api_key>.p8`.
 
 # License
 
-The code and data files in this repository are licensed under the terms of the version 3 of the GNU General Public License as published by the Free Software Foundation]. See the [LICENSE](./LICENSE) file for a copy of the license.
+The code and data files in this repository are licensed under the terms of the version 3 of the GNU General Public License as published by the Free Software Foundation. See the [LICENSE](./LICENSE) file for a copy of the license.

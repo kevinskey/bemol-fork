@@ -27,7 +27,7 @@ set -e
 
 year=`date +%Y`
 
-week=`date +%U | sed 's/^0*//'`
+week=`date +%V | sed 's/^0*//'`
 
 tags=`git tag -l "$year.$week.*"`
 

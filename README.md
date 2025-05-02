@@ -30,7 +30,7 @@ This ear training method was first described and implemented by [Alain Benbassat
 
 **Bemol** is organized in a series of progressive levels. First, you start in the key of **C major** and are limited to only the **first 4 notes** of the scale. Once you're able to consistently identify each of these 4 notes, you can move to the next level where you'll train with the **next 4 notes**. 
 
-Once the entire scale is mastered, the next level will introduce **chromatic notes**. After you master these, you can move to the next level which will introduce a new key. This repeats until you go through all the 12 major and 12 minor keys. It's not really required to practice in all 12 keys but it's fun :). You can also just use the `Random Key` button to practice in a random key after you have mastered the key of C major.
+Once the entire scale is mastered, the next level will introduce **chromatic notes**. After you master these, you can move to the next level which will introduce a new key. This repeats until you go through all the 12 major and 12 minor keys. It's not really required to practice in all 12 keys but it's fun :). You can also just use the `Random Key` button to practice in a random key after you have mastered the keys of C major and C minor.
 
 # How to get it
 
@@ -66,12 +66,9 @@ Once released to the App Store, **Bemol** will be **free forever** (just like th
    DEVELOPMENT_TEAM = <your-development-team-id>
    ```
 
-<br/>
-
 > [!TIP]
-> To be able to hear piano sounds (and not sine waves), you'll need to download a [sound font](https://en.wikipedia.org/wiki/SoundFont) in the `sl2` format and save it under `Bemol/Resources/sound_font.sl2`. The TestFlight version of **Bemol** uses the excellent and open-source sound font from [MuseScore](https://musescore.org/en) that you can download [here](https://musescore.org/en/handbook/3/soundfonts-and-sfz-files#list) (look for `MuseScore_General`).
+> To be able to hear piano sounds (and not sine waves), you'll need to download a [sound font](https://en.wikipedia.org/wiki/SoundFont) in the `sl2` format and save it under `Bemol/Resources/sound_font.sl2`. The TestFlight version of **Bemol** uses an excellent and open-source sound font from [MuseScore](https://musescore.org/en) that you can download [here](https://musescore.org/en/handbook/3/soundfonts-and-sfz-files#list) (look for `MuseScore_General`).
 
-<br/>
 
 ## How to run the tests
 

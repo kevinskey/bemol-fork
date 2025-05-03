@@ -55,6 +55,7 @@ final class AccuracyScreen {
     keyboardView.setEnabledForAllKeys(false)
     keyboardView.setTintForAllNotes(nil)
     keyboardView.isScrollEnabled = false
+    keyboardView.delegate = self
 
     return keyboardView
   }()

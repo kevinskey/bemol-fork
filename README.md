@@ -5,7 +5,7 @@
 
 <br />
 
-![bemol-home](https://github.com/user-attachments/assets/cd712231-7350-454f-87e9-f63eb84471f0)
+![bemol-home](https://github.com/user-attachments/assets/6e89b255-3dab-4d7e-9b5a-9c9276450c68)
 
 <br />
 
@@ -20,17 +20,17 @@
 
 # Background
 
-The goal of **Bemol** is to get you (if you're so inclined) to learn the character of each musical note by internalizing how the note relates to its nearest [tonic](https://en.wikipedia.org/wiki/Tonic_(music)). This is achieved through practice sessions in which you'll be prompted to identify a series of notes. For each note, Bemol will first play a [I - IV - V - I cadence](https://en.wikipedia.org/wiki/Cadence) to establish a [key](https://en.wikipedia.org/wiki/Key_(music)) in your ear and mind. Then the note is played and you identify it by playing it back on the keyboard. Once the note is successfully identified, a short sequence of notes from the note to its nearest tonic is played. 
+**Bemol** helps people learn the character of each musical note by having them internalize how each note relates to its nearest [tonic](https://en.wikipedia.org/wiki/Tonic_(music)) in a given [key](https://en.wikipedia.org/wiki/Key_(music)). In each practice session, the user is prompted to identify a series of played notes. Before each note, Bemol plays a [I - IV - V - I cadence](https://en.wikipedia.org/wiki/Cadence) to establish the key. After the user has identified the note, a short melody is played to resolve the note to the nearest tonic. Listening to this final resolution helps cement the relationship between the note and the tonic in the ear and the mind.
 
-At that point, your job is simply to listen and pay attention to how each note in the sequence moves towards the tonic (you can even sing along). This is what will cement the relationship between each note and the tonic in your ear. By repeating this process over and over again, you will begin to understand and internalize each note's unique qualities and will surprise yourself when you're suddenly able to clearly differentiate an F from an E in the key of C major, for example.
+As this process repeats, the user starts to internalize the character of each note in a given tonal context. This helps develop [relative pitch](https://en.wikipedia.org/wiki/Relative_pitch) and eventually they will have a much easier time recognizing any note as long as a tonal context is clearly established.
 
 This ear training method was first described and implemented by [Alain Benbassat](https://www.miles.be) in his free [Functional Ear Trainer desktop app](https://www.miles.be/software/functional-ear-trainer-v2/). **Bemol** is simply a free and open-source implementation of the method for iOS.
 
 # How it works
 
-**Bemol** is organized in a series of progressive levels. First, you start in the key of **C major** and are limited to only the **first 4 notes** of the scale. Once you're able to consistently identify each of these 4 notes, you can move to the next level where you'll train with the **next 4 notes**. 
+**Bemol** is organized in a series of progressive levels. The first level consists only of the **first 4 notes** in the key of **C major**. Once the user has at least 90% accuracy in this level, they can move to the next one, where they can practice the **next 4 notes**.
 
-Once the entire scale is mastered, the next level will introduce **chromatic notes**. After you master these, you can move to the next level which will introduce a new key. This repeats until you go through all the 12 major and 12 minor keys. It's not really required to practice in all 12 keys but it's fun :). You can also just use the `Random Key` button to practice in a random key after you have mastered the keys of C major and C minor.
+Once the entire scale is mastered, the next level will introduce **chromatic notes**. After this, a new key is introduced. This can go on until the user has practiced in all 12 major and 12 minor keys. Or they can choose just to practice in a random key after they have mastered the keys of C major and C minor.
 
 # How to get it
 
@@ -85,7 +85,7 @@ The script expects the following environment variables to be set:
 - `APP_STORE_CONNECT_API_KEY`
 - `APP_STORE_CONNECT_API_ISSUER`
 
-These are self-explanatory and their values can be found in App Store Connect. The script also expects a private key file to be available at `./private_keys/AuthKey_<APP_STORE_CONNECT_API_KEY>.p8`.
+These are self-explanatory and their values can be found in App Store Connect. The script also expects a private key file to be available at `private_keys/AuthKey_<APP_STORE_CONNECT_API_KEY>.p8`.
 
 # License
 

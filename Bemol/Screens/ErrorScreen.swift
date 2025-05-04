@@ -39,7 +39,10 @@ final class ErrorScreen {
     keyboardView.setEnabledForAllKeys(true)
     keyboardView.setTintForAllNotes(nil)
     keyboardView.isScrollEnabled = true
-    keyboardView.delegate = self
+    keyboardView.delegate = KeyboardViewDelegate(
+      didPressNote: { [weak self] in self?.didPressNote($0) },
+      didReleaseNote: { [weak self] in self?.didReleaseNote($0) }
+    )
 
     return keyboardView
   }()
@@ -92,7 +95,7 @@ final class ErrorScreen {
 
 // MARK: - KeyboardViewDelegate
 
-extension ErrorScreen: KeyboardViewDelegate {
+extension ErrorScreen {
   func didPressNote(_ note: Note) {
     let random = (0..<colors.count).randomElement() ?? 0
     keyboardView.setTint(colors[random], for: [note])

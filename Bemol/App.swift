@@ -35,7 +35,8 @@ final class App {
       didPressProgressButton: { [weak self] in self?.didPressProgressButton() },
       didPressConfigureButton: { [weak self] in self?.didPressConfigureButton() },
       didPressNote: { [weak self] in self?.didPressNote($0) },
-      didReleaseNote: { [weak self] in self?.didReleaseNote($0) }
+      didReleaseNote: { [weak self] in self?.didReleaseNote($0) },
+      didDismissTip: { [weak self] in self?.didDismissTip() }
     )
 
     return main
@@ -192,6 +193,10 @@ extension App {
   func didReleaseNote(_ note: Note) {
     loop.dispatch(.didReleaseNote(note))
   }
+
+  func didDismissTip() {
+    loop.dispatch(.didDismissTip)
+  }
 }
 
 // MARK: - LevelEditorDelegate
@@ -223,9 +228,15 @@ extension App {
     levelEditor.state = state.levelEditorScreenState
     accuracy.state = state.accuracyScreenState
     levelEditorView.isHidden = !state.isLevelEditorVisible
-    accuracyView.isHidden = !state.isAccuracyScreenVisible
     mainView.isHidden = state.isLevelEditorVisible || state.isAccuracyScreenVisible || state.hasError
     errorView.isHidden = !state.hasError
     errorScreen.error = state.error
+
+    if state.isAccuracyScreenVisible {
+      accuracy.state = nil // Force a state update.
+      accuracy.state = state.accuracyScreenState
+    }
+
+    accuracyView.isHidden = !state.isAccuracyScreenVisible
   }
 }

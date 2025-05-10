@@ -1,5 +1,5 @@
 ///
-/// AppEnvironment.swift
+/// Tip.swift
 /// Bemol
 ///
 /// Copyright 2025 Faiçal Tchirou
@@ -17,12 +17,37 @@
 ///
 
 import Foundation
-import os
 
-struct AppEnvironment {
-  let notePlayer: NotePlayer
-  let practiceManager: PracticeManager
-  let tipProvider: TipProvider
-  let preferences: Preferences
-  let logger: Logger
+struct Tip: Equatable {
+  enum Target {
+    case titleView
+    case startStopButton
+    case repeatButton
+    case previousButton
+    case nextButton
+    case randomButton
+    case homeButton
+    case accuracyRing
+    case configureLevelButton
+    case keyboard
+  }
+
+  let target: Target
+  let title: String
+  let message: String
+  let actionTitle: String
+
+  init(target: Target, title: String, message: String, actionTitle: String) {
+    self.target = target
+    self.title = title
+    self.message = message
+    self.actionTitle = actionTitle
+  }
+}
+
+// MARK: - TipHandler
+
+@MainActor
+protocol TipHandler {
+  func handle(_ tip: Tip)
 }

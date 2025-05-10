@@ -1,5 +1,5 @@
 # 🎵 Bemol
-![GitHub Workflow Status](https://github.com/ftchirou/Bemol/actions/workflows/run-tests.yml/badge.svg) <img src="https://img.shields.io/badge/coverage-78%25-yellow"> ![GitHub Workflow Status](https://github.com/ftchirou/Bemol/actions/workflows/upload-to-testflight.yml/badge.svg) ![GitHub release (latest SemVer)](https://img.shields.io/github/v/tag/ftchirou/Bemol)  <img src="https://img.shields.io/badge/beta-yellow"> <img src="https://img.shields.io/badge/iOS%2018.2%2B-red"> <img src="https://img.shields.io/badge/Swift%20%3E%3D%206-orange">
+![GitHub Workflow Status](https://github.com/ftchirou/Bemol/actions/workflows/run-tests.yml/badge.svg) <img src="https://img.shields.io/badge/coverage-75%25-yellow"> ![GitHub Workflow Status](https://github.com/ftchirou/Bemol/actions/workflows/upload-to-testflight.yml/badge.svg) ![GitHub release (latest SemVer)](https://img.shields.io/github/v/tag/ftchirou/Bemol)  <img src="https://img.shields.io/badge/beta-yellow"> <img src="https://img.shields.io/badge/iOS%2018.2%2B-red"> <img src="https://img.shields.io/badge/Swift%20%3E%3D%206-orange">
 
 **Bemol** is a **free** and **open-source** ear training app that helps music hobbyists and music students train and develop [relative pitch](https://en.wikipedia.org/wiki/Relative_pitch), the ability to recognize a played musical note in a given [tonal context](https://en.wikipedia.org/wiki/Tonic_(music)).
 
@@ -54,10 +54,11 @@ Once released to the App Store, **Bemol** will be **free forever** (just like th
 ## How to build and run
 
 1. Install [Xcode](https://developer.apple.com/xcode/). **Bemol** is built with [Swift 6](https://www.swift.org) and [Xcode 16.2](https://developer.apple.com/documentation/xcode-release-notes/xcode-16_2-release-notes).
-2. Clone the repository.
-3. Double-click `Bemol.xcodeproj` to open it in Xcode.
-4. **Bemol** has no third-party dependencies and requires no special tooling. So you can simply press `Run` in Xcode to launch the app in a simulator.
-5. If running on a device, you have to provide the id of your development team in a file named `Signing.xcconfig` that you put under `Configurations/`. The contents of the file should look like this:
+2. Clone the repository and run `cd Bemol/`.
+3. Run `touch ./Configurations/Signing.xcconfig` to create an empty signing config file.
+4. Run `open Bemol.xcodeproj` to open it in Xcode.
+5. Press `Run` in Xcode to launch the app in a simulator.
+6. If running on a device, you have to provide the id of your development team in `./Configurations/Signing.xcconfig`. The contents of the file should look like this:
    
    ```
    // Signing.xcconfig

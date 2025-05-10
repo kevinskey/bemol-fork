@@ -28,13 +28,7 @@ struct AppLoopTests {
   func didLoad() async throws {
     let notePlayer = MockNotePlayer()
     let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment(notePlayer: notePlayer, practiceManager: practiceManager)
     let state = AppState()
     let loop = AppLoop(environment: environment, initialState: state)
 
@@ -59,15 +53,7 @@ struct AppLoopTests {
 
   @Test
   func didLoadLevelSuccessfully() async throws {
-    let notePlayer = MockNotePlayer()
-    let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment()
     let state = AppState(isLoading: true)
     let loop = AppLoop(environment: environment, initialState: state)
 
@@ -83,7 +69,8 @@ struct AppLoopTests {
     #expect(nextState.question == nil)
     #expect(nextState.answer == nil)
     #expect(nextState.highlightedNote == nil)
-    #expect(nextState.isInteractionEnabled == false)
+    #expect(nextState.isInteractionEnabled == true)
+    #expect(nextState.currentTip == nil)
     #expect(nextState.accuracy == 0)
     #expect(nextState.accuracyPerNote.isEmpty == true)
 
@@ -92,15 +79,7 @@ struct AppLoopTests {
 
   @Test
   func didLoadLevelFails() async throws {
-    let notePlayer = MockNotePlayer()
-    let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment()
     let state = AppState(isLoading: true)
     let loop = AppLoop(environment: environment, initialState: state)
 
@@ -118,15 +97,8 @@ struct AppLoopTests {
 
   @Test
   func didPressHomeButton() async throws {
-    let notePlayer = MockNotePlayer()
     let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment(practiceManager: practiceManager)
     let state = AppState()
     let loop = AppLoop(environment: environment, initialState: state)
 
@@ -153,15 +125,8 @@ struct AppLoopTests {
 
   @Test
   func didPressRandomLevelButton() async throws {
-    let notePlayer = MockNotePlayer()
     let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment(practiceManager: practiceManager)
     let state = AppState()
     let loop = AppLoop(environment: environment, initialState: state)
 
@@ -187,16 +152,37 @@ struct AppLoopTests {
   }
 
   @Test
-  func didPressNextLevelButton() async throws {
-    let notePlayer = MockNotePlayer()
+  func didPressPreviousLevelButton() async throws {
     let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment(practiceManager: practiceManager)
+    let state = AppState()
+    let loop = AppLoop(environment: environment, initialState: state)
+
+    let (nextState, effect) = loop.nextState(currentState: state, action: .didPressPreviousLevelButton)
+
+    #expect(nextState.isLoading == true)
+
+    let task = Task {
+      try await effect?.run()
+    }
+
+    let action = try await task.value
+
+    await #expect(practiceManager.isMoveToPreviousLevelCalled == true)
+    await #expect(practiceManager.isMoveToNextLevelCalled == false)
+    await #expect(practiceManager.isMoveToFirstLevelCalled == false)
+    await #expect(practiceManager.isMoveToRandomLevelCalled == false)
+
+    guard case .didLoadLevel = action else {
+      Issue.record("expected next action to be `didLoadLevel` after `didPressPreviousLevelButton`")
+      return
+    }
+  }
+
+  @Test
+  func didPressNextLevelButton() async throws {
+    let practiceManager = MockPracticeManager()
+    let environment = makeAppEnvironment(practiceManager: practiceManager)
     let state = AppState()
     let loop = AppLoop(environment: environment, initialState: state)
 
@@ -223,15 +209,7 @@ struct AppLoopTests {
 
   @Test
   func didPressConfigureLevelButton() async throws {
-    let notePlayer = MockNotePlayer()
-    let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment()
     let state = AppState()
     let loop = AppLoop(environment: environment, initialState: state)
 
@@ -246,15 +224,8 @@ struct AppLoopTests {
 
   @Test
   func didPressStartStopButtonWhenNotPracticing() async throws {
-    let notePlayer = MockNotePlayer()
     let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment(practiceManager: practiceManager)
     let state = AppState(isPracticing: false)
     let loop = AppLoop(environment: environment, initialState: state)
 
@@ -283,15 +254,8 @@ struct AppLoopTests {
 
   @Test
   func didPressStartStopButtonWhenPracticing() async throws {
-    let notePlayer = MockNotePlayer()
     let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment(practiceManager: practiceManager)
     let state = AppState(isPracticing: true)
     let loop = AppLoop(environment: environment, initialState: state)
 
@@ -320,15 +284,8 @@ struct AppLoopTests {
 
   @Test
   func didStartSessionSuccessfully() async throws {
-    let notePlayer = MockNotePlayer()
     let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment(practiceManager: practiceManager)
     let state = AppState(isLoading: true)
     let loop = AppLoop(environment: environment, initialState: state)
 
@@ -365,15 +322,8 @@ struct AppLoopTests {
 
   @Test
   func didStartSessionPopulatesStats() async throws {
-    let notePlayer = MockNotePlayer()
     let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment(practiceManager: practiceManager)
     let state = AppState(isLoading: true)
     let loop = AppLoop(environment: environment, initialState: state)
 
@@ -425,15 +375,8 @@ struct AppLoopTests {
 
   @Test
   func didLogRightAnswerUpdatesStats() async throws {
-    let notePlayer = MockNotePlayer()
     let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment(practiceManager: practiceManager)
     let state = AppState()
     let loop = AppLoop(environment: environment, initialState: state)
 
@@ -485,15 +428,7 @@ struct AppLoopTests {
 
   @Test
   func didLogWrongAnswerUpdatesStats() async throws {
-    let notePlayer = MockNotePlayer()
-    let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment()
     let state = AppState()
     let loop = AppLoop(environment: environment, initialState: state)
 
@@ -534,15 +469,7 @@ struct AppLoopTests {
 
   @Test
   func didStartSessionFails() async throws {
-    let notePlayer = MockNotePlayer()
-    let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment()
     let state = AppState()
     let loop = AppLoop(environment: environment, initialState: state)
 
@@ -561,14 +488,7 @@ struct AppLoopTests {
   @Test
   func didPressRepeatQuestionButton() async throws {
     let notePlayer = MockNotePlayer()
-    let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment(notePlayer: notePlayer)
     let state = AppState(isPracticing: true, level: makeLevel(id: 1), question: makeQuestion())
     let loop = AppLoop(environment: environment, initialState: state)
 
@@ -597,15 +517,7 @@ struct AppLoopTests {
 
   @Test
   func didPressAccuracyRing() async throws {
-    let notePlayer = MockNotePlayer()
-    let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment()
     let state = AppState()
     let loop = AppLoop(environment: environment, initialState: state)
 
@@ -622,14 +534,7 @@ struct AppLoopTests {
   @Test
   func didPressNoteWhenNotPracticing() async throws {
     let notePlayer = MockNotePlayer()
-    let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment(notePlayer: notePlayer)
     let state = AppState(isPracticing: false)
     let loop = AppLoop(environment: environment, initialState: state)
     let note = Note(name: .d, octave: 1)
@@ -657,15 +562,7 @@ struct AppLoopTests {
 
   @Test
   func didPressNoteWhenPracticingAndNoteIsCorrect() async throws {
-    let notePlayer = MockNotePlayer()
-    let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment()
     let note = Note(name: .d, octave: 1)
     let state = AppState(
       isPracticing: true,
@@ -701,13 +598,7 @@ struct AppLoopTests {
   func didPressNoteWhenPracticingAndNoteIsWrong() async throws {
     let notePlayer = MockNotePlayer()
     let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment(notePlayer: notePlayer, practiceManager: practiceManager)
     let note = Note(name: .d, octave: 1)
     let wrongNote = Note(name: .c, octave: 2)
     let state = AppState(
@@ -745,15 +636,7 @@ struct AppLoopTests {
 
   @Test
   func didReleaseNote() async throws {
-    let notePlayer = MockNotePlayer()
-    let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment()
     let state = AppState(isPracticing: true)
     let loop = AppLoop(environment: environment, initialState: state)
 
@@ -767,15 +650,7 @@ struct AppLoopTests {
 
   @Test
   func didDismissLevelEditor() async throws {
-    let notePlayer = MockNotePlayer()
-    let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment()
     let state = AppState(isLevelEditorVisible: true)
     let loop = AppLoop(environment: environment, initialState: state)
 
@@ -790,15 +665,7 @@ struct AppLoopTests {
 
   @Test
   func didDismissAccuracyScreen() async throws {
-    let notePlayer = MockNotePlayer()
-    let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment()
     let state = AppState(isAccuracyScreenVisible: true)
     let loop = AppLoop(environment: environment, initialState: state)
 
@@ -813,15 +680,8 @@ struct AppLoopTests {
 
   @Test
   func didSelectNotes() async throws {
-    let notePlayer = MockNotePlayer()
     let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment(practiceManager: practiceManager)
     let level = makeLevel(id: 42)
     let state = AppState(level: level)
     let notes = [
@@ -855,15 +715,8 @@ struct AppLoopTests {
 
   @Test
   func didSelectNotesDoesNotUpdateLevelIfNotesHaveNotChanged() async throws {
-    let notePlayer = MockNotePlayer()
     let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment(practiceManager: practiceManager)
     let notes = [
       Note(name: .d, octave: 1),
       Note(name: .eFlat, octave: 2),
@@ -898,14 +751,7 @@ struct AppLoopTests {
   @Test
   func didLoadQuestionSuccessfully() async throws {
     let notePlayer = MockNotePlayer()
-    let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment(notePlayer: notePlayer)
     let question = makeQuestion(answer: Note(name: .c, octave: 1))
     let state = AppState(isLoading: true, level: makeLevel(id: 42))
     let loop = AppLoop(environment: environment, initialState: state)
@@ -939,15 +785,7 @@ struct AppLoopTests {
 
   @Test
   func didPlayCadenceSuccessfully() async throws {
-    let notePlayer = MockNotePlayer()
-    let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment()
     let state = AppState(isInteractionEnabled: false)
     let loop = AppLoop(environment: environment, initialState: state)
 
@@ -966,14 +804,7 @@ struct AppLoopTests {
   @Test
   func didPlayNoteInResolution() async throws {
     let notePlayer = MockNotePlayer()
-    let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment(notePlayer: notePlayer)
     let resolution: Resolution = [
       Note(name: .d, octave: 1),
       Note(name: .c, octave: 1)
@@ -1021,13 +852,7 @@ struct AppLoopTests {
   func didPlayLastNoteInResolution() async throws {
     let notePlayer = MockNotePlayer()
     let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment(notePlayer: notePlayer, practiceManager: practiceManager)
     let resolution: Resolution = []
     let question = makeQuestion(answer: Note(name: .d, octave: 1), resolution: resolution)
     let state = AppState(
@@ -1064,15 +889,7 @@ struct AppLoopTests {
 
   @Test
   func didLoadQuestionFails() async throws {
-    let notePlayer = MockNotePlayer()
-    let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment()
     let state = AppState(isLoading: true)
     let loop = AppLoop(environment: environment, initialState: state)
 
@@ -1090,15 +907,7 @@ struct AppLoopTests {
 
   @Test
   func didLogRightAnswerFails() async throws {
-    let notePlayer = MockNotePlayer()
-    let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment()
     let state = AppState(isLoading: true)
     let loop = AppLoop(environment: environment, initialState: state)
 
@@ -1116,15 +925,7 @@ struct AppLoopTests {
 
   @Test
   func didLogWrongAnswerFails() async throws {
-    let notePlayer = MockNotePlayer()
-    let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment()
     let state = AppState(isLoading: true)
     let loop = AppLoop(environment: environment, initialState: state)
 
@@ -1142,15 +943,7 @@ struct AppLoopTests {
 
   @Test
   func didPlayCadenceFails() async throws {
-    let notePlayer = MockNotePlayer()
-    let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment()
     let state = AppState(isLoading: true)
     let loop = AppLoop(environment: environment, initialState: state)
 
@@ -1168,15 +961,7 @@ struct AppLoopTests {
 
   @Test
   func didPlayNoteInResolutionFails() async throws {
-    let notePlayer = MockNotePlayer()
-    let practiceManager = MockPracticeManager()
-    let logger = Logger()
-    let environment = AppEnvironment(
-      notePlayer: notePlayer,
-      practiceManager: practiceManager,
-      preferences: MockPreferences(),
-      logger: logger
-    )
+    let environment = makeAppEnvironment()
     let state = AppState()
     let loop = AppLoop(environment: environment, initialState: state)
 
@@ -1190,6 +975,147 @@ struct AppLoopTests {
     #expect(nextState.error as? MockError == MockError.error)
 
     #expect(effect == nil)
+  }
+
+  @Test
+  func didLoadLevelWhenUserHasNotYetSeenTips() async throws {
+    let preferences = MockPreferences()
+    preferences.setValue(false, for: .userHasSeenOnboardingPrefKey)
+
+    let tips = [
+      Tip(target: .startStopButton, title: "title-1", message: "message-1", actionTitle: "next"),
+      Tip(target: .keyboard, title: "title-2", message: "message-2", actionTitle: "done"),
+    ]
+    let tipProvider = MockTipProvider(tips: tips)
+
+    let environment = makeAppEnvironment(tipProvider: tipProvider, preferences: preferences)
+    let state = AppState(isLoading: true)
+    let loop = AppLoop(environment: environment, initialState: state)
+
+    let (nextState, effect) = loop.nextState(
+      currentState: state,
+      action: .didLoadLevel(.success(makeLevel(id: 42)))
+    )
+
+    #expect(nextState.isLoading == false)
+    #expect(nextState.level?.id == 42)
+    #expect(nextState.hasError == false)
+    #expect(nextState.error == nil)
+    #expect(nextState.question == nil)
+    #expect(nextState.answer == nil)
+    #expect(nextState.highlightedNote == nil)
+    #expect(nextState.isInteractionEnabled == false)
+    #expect(nextState.currentTip == tips[0])
+    #expect(nextState.accuracy == 0)
+    #expect(nextState.accuracyPerNote.isEmpty == true)
+
+    #expect(effect == nil)
+  }
+
+  @Test
+  func didLoadLevelWhenUserHasAlreadySeenTips() async throws {
+    let preferences = MockPreferences()
+    preferences.setValue(true, for: .userHasSeenOnboardingPrefKey)
+
+    let tips = [
+      Tip(target: .startStopButton, title: "title-1", message: "message-1", actionTitle: "next"),
+      Tip(target: .keyboard, title: "title-2", message: "message-2", actionTitle: "done"),
+    ]
+    let tipProvider = MockTipProvider(tips: tips)
+
+    let environment = makeAppEnvironment(tipProvider: tipProvider, preferences: preferences)
+    let state = AppState(isLoading: true)
+    let loop = AppLoop(environment: environment, initialState: state)
+
+    let (nextState, effect) = loop.nextState(
+      currentState: state,
+      action: .didLoadLevel(.success(makeLevel(id: 42)))
+    )
+
+    #expect(nextState.isLoading == false)
+    #expect(nextState.level?.id == 42)
+    #expect(nextState.hasError == false)
+    #expect(nextState.error == nil)
+    #expect(nextState.question == nil)
+    #expect(nextState.answer == nil)
+    #expect(nextState.highlightedNote == nil)
+    #expect(nextState.isInteractionEnabled == true)
+    #expect(nextState.currentTip == nil)
+    #expect(nextState.accuracy == 0)
+    #expect(nextState.accuracyPerNote.isEmpty == true)
+
+    #expect(effect == nil)
+  }
+
+  @Test
+  func didDismissTip() async throws {
+    let preferences = MockPreferences()
+    preferences.setValue(false, for: .userHasSeenOnboardingPrefKey)
+
+    let tips = [
+      Tip(target: .startStopButton, title: "title-1", message: "message-1", actionTitle: "next"),
+      Tip(target: .keyboard, title: "title-2", message: "message-2", actionTitle: "done"),
+    ]
+    let tipProvider = MockTipProvider(tips: tips)
+
+    let environment = makeAppEnvironment(tipProvider: tipProvider, preferences: preferences)
+    let state = AppState(currentTip: tipProvider.nextTip())
+    let loop = AppLoop(environment: environment, initialState: state)
+
+    let (nextState, effect) = loop.nextState(
+      currentState: state,
+      action: .didDismissTip
+    )
+
+    #expect(nextState.isInteractionEnabled == false)
+    #expect(nextState.currentTip == tips[1])
+    #expect(preferences.value(for: .userHasSeenOnboardingPrefKey) == false)
+    #expect(effect == nil)
+  }
+
+  @Test
+  func didDismissLastTip() async throws {
+    let preferences = MockPreferences()
+    preferences.setValue(false, for: .userHasSeenOnboardingPrefKey)
+
+    let tips = [
+      Tip(target: .startStopButton, title: "title-1", message: "message-1", actionTitle: "next"),
+      Tip(target: .keyboard, title: "title-2", message: "message-2", actionTitle: "done"),
+    ]
+    let tipProvider = MockTipProvider(tips: tips)
+    let _ = tipProvider.nextTip()
+
+    let environment = makeAppEnvironment(tipProvider: tipProvider, preferences: preferences)
+    let state = AppState(currentTip: tipProvider.nextTip())
+    let loop = AppLoop(environment: environment, initialState: state)
+
+    let (nextState, effect) = loop.nextState(
+      currentState: state,
+      action: .didDismissTip
+    )
+
+    #expect(nextState.isInteractionEnabled == true)
+    #expect(nextState.currentTip == nil)
+    #expect(preferences.value(for: .userHasSeenOnboardingPrefKey) == true)
+    #expect(effect == nil)
+  }
+
+  // MARK: - Private Helpers
+
+  private func makeAppEnvironment(
+    notePlayer: NotePlayer = MockNotePlayer(),
+    practiceManager: PracticeManager = MockPracticeManager(),
+    tipProvider: TipProvider = MockTipProvider(),
+    preferences: Preferences = MockPreferences(),
+    logger: Logger = Logger()
+  ) -> AppEnvironment {
+    AppEnvironment(
+      notePlayer: notePlayer,
+      practiceManager: practiceManager,
+      tipProvider: tipProvider,
+      preferences: preferences,
+      logger: logger
+    )
   }
 }
 
@@ -1308,19 +1234,45 @@ private actor MockPracticeManager: PracticeManager {
   }
 }
 
+// MARK: - MockTipProvider
+
+private final class MockTipProvider: TipProvider {
+  let tips: [Tip]
+  var index = -1
+
+  init(tips: [Tip] = []) {
+    self.tips = tips
+  }
+
+  func nextTip() -> Tip? {
+    if index + 1 < tips.count {
+      index += 1
+      return tips[index]
+    }
+
+    return nil
+  }
+}
+
+// MARK: - MockPreferences
+
 private final class MockPreferences: Preferences {
+  var values: [String: Any] = [:]
+
   func value(for key: String) -> Int? {
-    nil
+    values[key] as? Int
   }
   
   func setValue(_ value: Int, for key: String) {
+    values[key] = value
   }
   
   func value(for key: String) -> Bool {
-    false
+    (values[key] as? Bool) ?? false
   }
   
   func setValue(_ value: Bool, for key: String) {
+    values[key] = value
   }
 }
 

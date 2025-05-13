@@ -736,11 +736,9 @@ struct AppLoopTests {
 
     let action = try await task.value
 
-    await #expect(practiceManager.isUseTemporaryLevelCalled == false)
-
     let temporaryLevel =  await practiceManager.getTemporaryLevel()
 
-    #expect(temporaryLevel == nil)
+    #expect(temporaryLevel?.isCustom == false)
 
     guard case .didLoadLevel = action else {
       Issue.record("expected next action to be `didLoadLevel` after `didSelectNotes`")
@@ -980,7 +978,7 @@ struct AppLoopTests {
   @Test
   func didLoadLevelWhenUserHasNotYetSeenTips() async throws {
     let preferences = MockPreferences()
-    preferences.setValue(false, for: .userHasSeenOnboardingPrefKey)
+    preferences.setValue(false, for: .userHasSeenOnboarding)
 
     let tips = [
       Tip(target: .startStopButton, title: "title-1", message: "message-1", actionTitle: "next"),
@@ -1015,7 +1013,7 @@ struct AppLoopTests {
   @Test
   func didLoadLevelWhenUserHasAlreadySeenTips() async throws {
     let preferences = MockPreferences()
-    preferences.setValue(true, for: .userHasSeenOnboardingPrefKey)
+    preferences.setValue(true, for: .userHasSeenOnboarding)
 
     let tips = [
       Tip(target: .startStopButton, title: "title-1", message: "message-1", actionTitle: "next"),
@@ -1050,7 +1048,7 @@ struct AppLoopTests {
   @Test
   func didDismissTip() async throws {
     let preferences = MockPreferences()
-    preferences.setValue(false, for: .userHasSeenOnboardingPrefKey)
+    preferences.setValue(false, for: .userHasSeenOnboarding)
 
     let tips = [
       Tip(target: .startStopButton, title: "title-1", message: "message-1", actionTitle: "next"),
@@ -1069,14 +1067,14 @@ struct AppLoopTests {
 
     #expect(nextState.isInteractionEnabled == false)
     #expect(nextState.currentTip == tips[1])
-    #expect(preferences.value(for: .userHasSeenOnboardingPrefKey) == false)
+    #expect(preferences.value(for: .userHasSeenOnboarding) == false)
     #expect(effect == nil)
   }
 
   @Test
   func didDismissLastTip() async throws {
     let preferences = MockPreferences()
-    preferences.setValue(false, for: .userHasSeenOnboardingPrefKey)
+    preferences.setValue(false, for: .userHasSeenOnboarding)
 
     let tips = [
       Tip(target: .startStopButton, title: "title-1", message: "message-1", actionTitle: "next"),
@@ -1096,7 +1094,7 @@ struct AppLoopTests {
 
     #expect(nextState.isInteractionEnabled == true)
     #expect(nextState.currentTip == nil)
-    #expect(preferences.value(for: .userHasSeenOnboardingPrefKey) == true)
+    #expect(preferences.value(for: .userHasSeenOnboarding) == true)
     #expect(effect == nil)
   }
 
@@ -1223,7 +1221,7 @@ private actor MockPracticeManager: PracticeManager {
     return makeSession()
   }
 
-  func useTemporaryLevel(level: Level) async throws -> Level {
+  func setCurrentLevel(_ level: Level) async throws -> Level {
     isUseTemporaryLevelCalled = true
     temporaryLevel = level
     return level
@@ -1259,20 +1257,20 @@ private final class MockTipProvider: TipProvider {
 private final class MockPreferences: Preferences {
   var values: [String: Any] = [:]
 
-  func value(for key: String) -> Int? {
-    values[key] as? Int
+  func value(for key: PreferenceKey) -> Int? {
+    values[key.rawValue] as? Int
   }
   
-  func setValue(_ value: Int, for key: String) {
-    values[key] = value
+  func setValue(_ value: Int, for key: PreferenceKey) {
+    values[key.rawValue] = value
   }
   
-  func value(for key: String) -> Bool {
-    (values[key] as? Bool) ?? false
+  func value(for key: PreferenceKey) -> Bool {
+    (values[key.rawValue] as? Bool) ?? false
   }
   
-  func setValue(_ value: Bool, for key: String) {
-    values[key] = value
+  func setValue(_ value: Bool, for key: PreferenceKey) {
+    values[key.rawValue] = value
   }
 }
 

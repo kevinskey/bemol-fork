@@ -49,7 +49,7 @@ actor CyclicPracticeManager: PracticeManager {
     self.levelGenerator = levelGenerator
     self.noteResolutionGenerator = noteResolutionGenerator
     self.preferences = preferences
-    self.cursor = preferences.value(for: preferenceKey) ?? -1
+    self.cursor = preferences.value(for: .latestPracticeCursor) ?? -1
   }
 
   func prepareToPractice() async throws {
@@ -93,7 +93,7 @@ actor CyclicPracticeManager: PracticeManager {
     return currentLevel!
   }
 
-  func useTemporaryLevel(level: Level) async throws -> Level {
+  func setCurrentLevel(_ level: Level) async throws -> Level {
     currentLevel = level
     currentNotes = level.notes.shuffled()
     return level
@@ -200,7 +200,7 @@ actor CyclicPracticeManager: PracticeManager {
     allLevels[cursor] = allLevels[cursor].withSessions(sessions)
     currentLevel = allLevels[cursor]
 
-    preferences.setValue(cursor - 1, for: preferenceKey)
+    preferences.setValue(cursor - 1, for: .latestPracticeCursor)
     currentNotes = level.notes.shuffled()
 
     return allLevels[cursor]

@@ -309,7 +309,7 @@ struct CyclicPracticeManagerTests {
     try await manager.prepareToPractice()
     let _ = try await manager.moveToNextLevel()
     let _ = try await manager.startSession()
-    let _ = try await manager.useTemporaryLevel(level: makeLevel(id: 1).withNotes([]))
+    let _ = try await manager.setCurrentLevel(makeLevel(id: 1).withNotes([]))
 
     let question = Question(answer: note, resolution: [])
 
@@ -352,8 +352,8 @@ struct CyclicPracticeManagerTests {
     try await manager.prepareToPractice()
     let _ = try await manager.moveToNextLevel()
     let _ = try await manager.startSession()
-    let level = try await manager.useTemporaryLevel(
-      level: makeLevel(id: 1).withNotes([
+    let level = try await manager.setCurrentLevel(
+      makeLevel(id: 1).withNotes([
         Note(name: .d, octave: 1),
         Note(name: .bFlat, octave: 2),
         Note(name: .g, octave: 1),
@@ -368,7 +368,7 @@ struct CyclicPracticeManagerTests {
 
   @Test func moveToNextLevelRestoresTheLastPlayedLevel() async throws {
     let preferences = MockPreferences()
-    preferences.setValue(1, for: "practice.level.cursor")
+    preferences.setValue(1, for: .latestPracticeCursor)
 
 
     let manager = CyclicPracticeManager(
@@ -637,8 +637,8 @@ struct CyclicPracticeManagerTests {
       preferences: MockPreferences()
     )
 
-    let level = try await manager.useTemporaryLevel(
-      level: makeLevel(id: 1).withNotes([
+    let level = try await manager.setCurrentLevel(
+      makeLevel(id: 1).withNotes([
         Note(name: .c, octave: 4),
       ])
     )
@@ -754,18 +754,18 @@ private actor MockSessionStorage: SessionStorage {
 private final class MockPreferences: Preferences {
   private var value: Int? = nil
 
-  func value(for key: String) -> Int? {
+  func value(for key: PreferenceKey) -> Int? {
     value
   }
 
-  func setValue(_ value: Int, for key: String) {
+  func setValue(_ value: Int, for key: PreferenceKey) {
     self.value = value
   }
 
-  func value(for key: String) -> Bool {
+  func value(for key: PreferenceKey) -> Bool {
     false
   }
 
-  func setValue(_ value: Bool, for key: String) {
+  func setValue(_ value: Bool, for key: PreferenceKey) {
   }
 }

@@ -34,20 +34,16 @@ Once the entire scale is mastered, the next level will introduce **chromatic not
 
 # How to get it
 
-**Bemol** is still in development but if you'd like to try it before it's released to the App Store, you can have access to the beta versions [here](https://testflight.apple.com/join/8vhsQVQQ).
-
-1. First, install the [TestFlight app](https://testflight.apple.com) on your phone.
-2. Then, follow the [link](https://testflight.apple.com/join/8vhsQVQQ) to join the beta testing group.
-3. You will now be able to install new versions of the app as they become available.
+1. **Bemol** is available on the [AltStore](https://altstore.io).
+    - First, download and install the AltStore PAL app [here](https://altstore.io/#Downloads).
+    - Then, copy [this URL](https://storage.googleapis.com/bemol/alt-store.json) and add it as a source in the AltStore app.
+    - Finally, download **Bemol** from within the AltStore app.
+2. Alternatively, you can install **Bemol** from TestFlight [here](https://testflight.apple.com/join/8vhsQVQQ). This option may be useful if you don't have access to the AltStore or if you prefer to use the cutting-edge version of the app.
 
 <br/>
 
 > [!IMPORTANT]
-> The versions of the app in TestFlight are beta versions. Even though the basic mechanics are implemented and the app is usable, not everything is fully polished, and bugs and crashes will not be uncommon. You can help and contribute to the development of **Bemol** by reporting these bugs through TestFlight.
-
-<br/>
-
-Once released to the App Store, **Bemol** will be **free forever** (just like the original desktop app) and the code will remain available here.
+> The version of the app in TestFlight is the most recent development version. Which means that it may contain newer features and/or improvements not yet available in the official release on the AltStore. On the other hand, it is also less stable and may contain newer bugs and crashes. You can help and contribute to the development of **Bemol** by reporting these bugs through TestFlight.
 
 # For developers
 

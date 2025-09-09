@@ -1,0 +1,86 @@
+:root{
+  --bg:#0C2340;          /* navy */
+  --surface:#111827;     /* dark slate */
+  --text:#FFFFFF;
+  --muted:#94A3B8;
+  --accent:#1D4ED8;      /* blue */
+  --accent-2:#60A5FA;    /* light blue */
+  --ok:#10B981;          /* green */
+  --bad:#EF4444;         /* red */
+  --radius:14px;
+  --shadow:0 10px 30px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font:16px/1.5 ui-sans-serif, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(1000px 600px at 85% -200px, rgba(29,78,216,.25), transparent),
+    var(--bg);
+}
+
+/* Layout */
+header{padding:18px 20px;background:linear-gradient(90deg,var(--accent),#0a5bd8 60%,transparent)}
+header h1{margin:0;font-size:22px}
+main,section{max-width:1000px;margin:0 auto;padding:16px}
+nav{
+  position:sticky; top:0; z-index:10;
+  display:flex; gap:8px; flex-wrap:wrap;
+  padding:10px 16px; background:#0B1A34; border-bottom:1px solid rgba(255,255,255,.08)
+}
+
+/* Tabs */
+button.tab{
+  background:#374151; color:#fff; border:0; cursor:pointer;
+  border-radius:10px; padding:8px 12px; font-weight:700;
+  transition:transform .06s ease, background .2s ease, color .2s ease
+}
+button.tab:hover{transform:translateY(-1px)}
+button.tab.active{background:#fff; color:var(--bg)}
+
+/* Cards */
+.card{
+  background:var(--surface); border-radius:var(--radius);
+  padding:18px; box-shadow:var(--shadow); border:1px solid rgba(255,255,255,.06)
+}
+
+/* Controls */
+.row{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:10px 0}
+label{display:inline-flex; gap:6px; align-items:center; color:var(--muted); font-weight:600}
+input[type="number"], select{
+  appearance:none; -webkit-appearance:none;
+  background:#0F213F; color:#fff; border:1px solid rgba(255,255,255,.15);
+  padding:8px 10px; border-radius:10px; min-width:90px
+}
+input[type="number"]:focus, select:focus, button:focus{outline:0; box-shadow:0 0 0 3px rgba(96,165,250,.45)}
+
+/* Buttons */
+.btn{
+  border:0; border-radius:12px; padding:10px 14px; font-weight:800; cursor:pointer;
+  transition:transform .06s ease, filter .2s ease, background .2s ease, color .2s ease
+}
+.btn:active{transform:translateY(1px)}
+.primary{background:#fff; color:var(--bg)}
+.ghost{background:#223256; color:#fff}
+a.button{display:inline-block} /* link-styled buttons */
+
+/* Feedback flashes */
+.ok{background:var(--ok)!important; color:#081C15!important; box-shadow:0 0 0 0 rgba(16,185,129,.6); animation:okFlash .4s ease-out}
+.bad{background:var(--bad)!important; color:#1B0B0B!important; box-shadow:0 0 0 0 rgba(239,68,68,.6); animation:badFlash .4s ease-out}
+@keyframes okFlash{to{box-shadow:0 0 0 24px rgba(16,185,129,0)}}
+@keyframes badFlash{to{box-shadow:0 0 0 24px rgba(239,68,68,0)}}
+
+/* Status text */
+.muted{color:var(--muted)}
+#degStatus,#intStatus,#chordStatus,#rhythmStatus{color:var(--muted); font-weight:700}
+
+/* Small screens */
+@media (max-width:640px){
+  header h1{font-size:18px}
+  .btn{padding:10px 12px}
+}
+
+/* Optional footer */
+footer{margin-top:40px;padding:16px;text-align:center;color:var(--muted)}

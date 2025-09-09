@@ -1,5 +1,3 @@
-# 🎵 Bemol
-
 # 🎵 Bemol Fork
 
 This is a fork of [Bemol](https://github.com/ftchirou/Bemol), an open-source iOS ear-training app based on **Functional Ear Training**.  

@@ -1,62 +1,153 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Bemol Fork – Ear Training App</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #0C2340; /* Spelman Blue */
-      color: #fff;
-      text-align: center;
-    }
-    header {
-      padding: 2rem;
-      background: #1D4ED8; /* lighter blue accent */
-    }
-    h1 {
-      margin: 0;
-      font-size: 2.5rem;
-    }
-    main {
-      padding: 2rem;
-    }
-    a.button {
-      display: inline-block;
-      margin-top: 1rem;
-      padding: 0.75rem 1.5rem;
-      background: #fff;
-      color: #0C2340;
-      text-decoration: none;
-      border-radius: 8px;
-      font-weight: bold;
-    }
-    footer {
-      margin-top: 3rem;
-      padding: 1rem;
-      font-size: 0.9rem;
-      background: #111827;
-    }
-  </style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bemol Web Trainer</title>
+<style>
+  body{margin:0;font-family:system-ui,Arial;background:#0C2340;color:#fff}
+  header{padding:16px 20px;background:#1D4ED8}
+  h1{margin:0;font-size:22px}
+  main{max-width:800px;margin:0 auto;padding:24px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
+  button{cursor:pointer;border:0;border-radius:10px;padding:12px 16px;font-weight:700}
+  .primary{background:#fff;color:#0C2340}
+  .ghost{background:#111827;color:#fff}
+  .ok{background:#10B981;color:#081C15}
+  .bad{background:#EF4444;color:#1B0B0B}
+  .card{background:#111827;border-radius:14px;padding:16px}
+  .muted{opacity:.8}
+</style>
 </head>
 <body>
-  <header>
-    <h1>🎵 Bemol Fork</h1>
-    <p>Open-source Functional Ear Training App</p>
-  </header>
-  <main>
-    <h2>About</h2>
-    <p>
-      This project is a fork of <a href="https://github.com/ftchirou/Bemol" target="_blank">Bemol</a>, 
-      an open-source iOS app for ear training. It is maintained by Kevin Johnson for educational use.
-    </p>
-    <a class="button" href="https://github.com/kevinskey/bemol-fork">View on GitHub</a>
-  </main>
-  <footer>
-    <p>© 2025 Kevin Johnson | Licensed under GNU GPL v3</p>
-  </footer>
+<header><h1>Bemol Web Trainer (Major scale degrees)</h1></header>
+<main>
+  <div class="card">
+    <p class="muted">Cadence: I–IV–V–I in selected key, then a single degree (1–7). Identify the degree.</p>
+    <div class="row">
+      <label>Key:
+        <select id="keySel">
+          <option>C</option><option>G</option><option>D</option><option>A</option><option>E</option>
+          <option>B</option><option>F#</option><option>Db</option><option>Ab</option><option>Eb</option>
+          <option>Bb</option><option>F</option>
+        </select>
+      </label>
+      <label>Tempo:
+        <input id="tempo" type="number" value="84" min="50" max="160">
+      </label>
+      <button id="start" class="primary">Start / Reset</button>
+      <button id="cadence" class="ghost">Play Cadence</button>
+      <button id="note" class="ghost">Play Note</button>
+    </div>
+    <div class="row" id="answers"></div>
+    <div class="row">
+      <button id="reveal" class="ghost">Reveal</button>
+      <span id="status" class="muted"></span>
+    </div>
+    <div class="row">
+      <span id="score" class="muted">Score: 0 / 0</span>
+    </div>
+  </div>
+</main>
+
+<script>
+(() => {
+  const SEMI = Math.pow(2,1/12);
+  const DEG_TO_SEMI = {1:0, 2:2, 3:4, 4:5, 5:7, 6:9, 7:11};
+  const KEY_TO_SEMI_FROM_C = {C:0,"G":7,"D":2,"A":9,"E":4,"B":11,"F#":6,"Db":1,"Ab":8,"Eb":3,"Bb":10,"F":5};
+  let ctx, master, key="C", tempo=84, currentDeg=null, correct=0, total=0;
+
+  const $ = id => document.getElementById(id);
+  const keySel = $("keySel"), tempoEl = $("tempo"), status = $("status");
+  const score = $("score"), answers = $("answers");
+
+  function initAudio(){
+    if(ctx) return;
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    master = ctx.createGain(); master.gain.value = 0.12; master.connect(ctx.destination);
+  }
+
+  function nowBeat(delayBeats=0){ return ctx.currentTime + (60/tempo)*delayBeats; }
+
+  function noteFreqFrom(keyName, degree, octave=4){
+    const semisFromCKey = KEY_TO_SEMI_FROM_C[keyName];
+    const semisFromTonic = DEG_TO_SEMI[degree];
+    const semisTotal = (octave-4)*12 + semisFromCKey + semisFromTonic; // A4=440, C4≈261.63
+    const c4 = 261.625565;
+    return c4 * Math.pow(SEMI, semisTotal);
+  }
+
+  function beep(freq, start, dur){
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type="sine"; o.frequency.value=freq;
+    g.gain.setValueAtTime(0, start);
+    g.gain.linearRampToValueAtTime(master.gain.value, start+0.01);
+    g.gain.setTargetAtTime(0.0001, start+dur-0.03, 0.02);
+    o.connect(g).connect(master);
+    o.start(start); o.stop(start+dur+0.05);
+  }
+
+  function chord(degrees, start, dur){
+    degrees.forEach(d => beep(noteFreqFrom(key, d, 4), start, dur));
+  }
+
+  function playCadence(){
+    initAudio();
+    const beat = 60/tempo;
+    let t = nowBeat(0.05/beat);
+    // I
+    chord([1,3,5], t, 1*beat); t += 1*beat;
+    // IV
+    chord([4,6,1], t, 1*beat); t += 1*beat;
+    // V
+    chord([5,7,2], t, 1*beat); t += 1*beat;
+    // I held
+    chord([1,3,5], t, 1.2*beat);
+  }
+
+  function pickDegree(){ // 1..7 uniformly
+    const d = 1 + Math.floor(Math.random()*7);
+    currentDeg = d;
+    status.textContent = "Note queued. Guess the degree.";
+  }
+
+  function playNote(){
+    initAudio();
+    if(currentDeg==null) pickDegree();
+    const t = nowBeat(0.05/(60/tempo));
+    beep(noteFreqFrom(key, currentDeg, 4), t, 0.8*(60/tempo));
+  }
+
+  function guess(d){
+    if(currentDeg==null){ status.textContent="Play a note first."; return; }
+    total++;
+    if(d===currentDeg){ correct++; flash(d,true); status.textContent="Correct."; }
+    else { flash(d,false); status.textContent="Wrong. Try cadence + new note."; }
+    score.textContent = `Score: ${correct} / ${total}`;
+    pickDegree();
+  }
+
+  function flash(d,ok){
+    const btn = document.querySelector(`[data-deg="${d}"]`);
+    btn.classList.add(ok?"ok":"bad");
+    setTimeout(()=>btn.classList.remove("ok","bad"), 400);
+  }
+
+  // UI setup
+  keySel.onchange = e => key = e.target.value;
+  tempoEl.onchange = e => tempo = Math.max(50, Math.min(160, +e.target.value||84));
+  $("start").onclick = () => { initAudio(); correct=0; total=0; score.textContent="Score: 0 / 0"; pickDegree(); status.textContent="Ready."; };
+  $("cadence").onclick = playCadence;
+  $("note").onclick = playNote;
+  $("reveal").onclick = () => { if(currentDeg) status.textContent = `Answer: ${currentDeg}`; };
+
+  // answer buttons
+  for(let d=1; d<=7; d++){
+    const b=document.createElement("button");
+    b.textContent = String(d); b.dataset.deg=d; b.className="primary";
+    b.onclick = () => guess(d);
+    answers.appendChild(b);
+  }
+})();
+</script>
 </body>
 </html>

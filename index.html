@@ -51,4 +51,250 @@
       <button class="btn ghost" id="degreeNote">Play Note</button>
       <button class="btn ghost" id="startDeg">Reset</button>
     </div>
-    <div class="row" id="degBtns"></
+    <div class="row" id="degBtns"></div>
+    <div class="row">
+      <span id="degStatus">Score 0/0</span>
+    </div>
+  </div>
+</section>
+
+<section id="intervals">
+  <div class="card">
+    <div class="row">
+      <label>Direction
+        <select id="intDir"><option value="up">Up</option><option value="down">Down</option><option value="mix">Mix</option></select>
+      </label>
+      <button class="btn primary" id="playInterval">Play Interval</button>
+    </div>
+    <div class="row" id="intBtns"></div>
+    <div id="intStatus"></div>
+  </div>
+</section>
+
+<section id="chords">
+  <div class="card">
+    <div class="row"><button class="btn primary" id="playChord">Play Chord</button></div>
+    <div class="row" id="chordBtns"></div>
+    <div id="chordStatus"></div>
+  </div>
+</section>
+
+<section id="rhythm">
+  <div class="card">
+    <div class="row">
+      <label>Meter
+        <select id="meter"><option>4/4</option><option>3/4</option><option>6/8</option></select>
+      </label>
+      <button class="btn primary" id="playPattern">Play Pattern</button>
+    </div>
+    <p id="rhythmStatus"></p>
+  </div>
+</section>
+
+<section id="stats">
+  <div class="card">
+    <div class="row">
+      <button class="btn primary" id="exportCSV">Download CSV</button>
+      <button class="btn ghost" id="resetStats">Reset Stats</button>
+    </div>
+    <pre id="statsText">Loading…</pre>
+  </div>
+</section>
+
+<script>
+/* Tabs */
+document.querySelectorAll("button.tab").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("button.tab").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
+  b.classList.add("active"); document.getElementById(b.dataset.t).classList.add("active");
+  if(b.dataset.t==="stats") renderStats();
+});
+
+/* Persistence */
+const LS_KEY_LOG = "bemolLog";
+const LS_KEY_SETTINGS = "bemolSettings";
+let LOG = JSON.parse(localStorage.getItem(LS_KEY_LOG)||"[]");
+let SETTINGS = Object.assign({key:"C", scale:"Major", tempo:84}, JSON.parse(localStorage.getItem(LS_KEY_SETTINGS)||"{}"));
+function saveSettings(){ localStorage.setItem(LS_KEY_SETTINGS, JSON.stringify(SETTINGS)); }
+
+/* Audio core */
+const ctx = new (window.AudioContext||window.webkitAudioContext)();
+const master = ctx.createGain(); master.gain.value=0.12; master.connect(ctx.destination);
+const SEMI = Math.pow(2,1/12);
+const C4 = 261.625565;
+const KEY_TO_SEMI_FROM_C = {C:0,G:7,D:2,A:9,E:4,B:11,"F#":6,Db:1,Ab:8,Eb:3,Bb:10,F:5};
+const DEG_SEMI_MAJOR = {1:0,2:2,3:4,4:5,5:7,6:9,7:11};
+const DEG_SEMI_NATMIN = {1:0,2:2,3:3,4:5,5:7,6:8,7:10};
+function now(d=0){ return ctx.currentTime + d; }
+function osc(f,t,d){ const o=ctx.createOscillator(), g=ctx.createGain();
+  o.type="sine"; o.frequency.value=f; g.gain.value=0; o.connect(g).connect(master);
+  g.gain.linearRampToValueAtTime(master.gain.value, t+0.01);
+  g.gain.setTargetAtTime(0.0001, t+d-0.03, 0.02);
+  o.start(t); o.stop(t+d+0.05);
+}
+function beatDur(){ const tp = Math.max(50, Math.min(160, +SETTINGS.tempo||84)); return 60/tp; }
+function degreeSemis(scale,deg){ const map = (scale==="Major")?DEG_SEMI_MAJOR:DEG_SEMI_NATMIN; return map[deg]; }
+function freqDeg(key, scale, deg, oct=4){
+  return C4 * Math.pow(SEMI, (oct-4)*12 + KEY_TO_SEMI_FROM_C[key] + degreeSemis(scale,deg));
+}
+
+/* Logging */
+function logAttempt(mode, detail, key, scale, correct, ms){
+  LOG.push({ts:new Date().toISOString(), mode, detail, key, scale, correct:+!!correct, ms: Math.round(ms||0)});
+  localStorage.setItem(LS_KEY_LOG, JSON.stringify(LOG));
+}
+
+/* ===== Degrees (Major / Natural minor) ===== */
+const keySel = document.getElementById("keySel");
+const scaleSel = document.getElementById("scaleSel");
+const tempoEl = document.getElementById("tempo");
+const degBtns = document.getElementById("degBtns");
+const degStatus = document.getElementById("degStatus");
+let targetDeg = null, degStartT = null, degCorrect=0, degTotal=0;
+
+function labelSet(){ return (SETTINGS.scale==="Major") ? ["1","2","3","4","5","6","7"] : ["1","2","♭3","4","5","♭6","♭7"]; }
+function renderDegreeButtons(){
+  degBtns.innerHTML="";
+  labelSet().forEach((lab,i)=>{
+    const d = i+1;
+    const b=document.createElement("button");
+    b.textContent=lab; b.className="btn primary"; b.dataset.deg=d; b.onclick=()=>degGuess(d,b,lab);
+    degBtns.appendChild(b);
+  });
+}
+function playCadence(){
+  const beat=beatDur(); let t=now(0.05);
+  // Simple cadence: I–IV–V–I (in minor this is i–iv–v–i, adequate for context)
+  [[1,3,5],[4,6,1],[5,7,2],[1,3,5]].forEach(ch=>{
+    ch.forEach(d=>osc(freqDeg(SETTINGS.key, SETTINGS.scale, d, 4), t, beat)); t+=beat;
+  });
+}
+function newDegNote(){
+  targetDeg = 1 + Math.floor(Math.random()*7);
+  degStartT = performance.now();
+  const d=beatDur();
+  osc(freqDeg(SETTINGS.key, SETTINGS.scale, targetDeg, 4), now(0.05), 0.8*d);
+}
+function degGuess(d,btn,label){
+  if(targetDeg==null){ degStatus.textContent="Play Note first."; return; }
+  const ms = performance.now() - degStartT;
+  degTotal++;
+  const correct = (d===targetDeg);
+  if(correct){ degCorrect++; btn.classList.add("ok"); setTimeout(()=>btn.classList.remove("ok"),350); }
+  else { btn.classList.add("bad"); setTimeout(()=>btn.classList.remove("bad"),350); }
+  logAttempt("degrees", `deg:${label}`, SETTINGS.key, SETTINGS.scale, correct, ms);
+  degStatus.textContent = `Score ${degCorrect}/${degTotal}`;
+  targetDeg = null; degStartT = null;
+}
+document.getElementById("cadence").onclick = ()=>{ ctx.resume(); playCadence(); };
+document.getElementById("degreeNote").onclick = ()=>{ ctx.resume(); newDegNote(); };
+document.getElementById("startDeg").onclick = ()=>{ degCorrect=0; degTotal=0; degStatus.textContent="Score 0/0"; targetDeg=null; };
+keySel.onchange = e=>{ SETTINGS.key=e.target.value; saveSettings(); };
+scaleSel.onchange = e=>{ SETTINGS.scale=e.target.value; saveSettings(); renderDegreeButtons(); };
+tempoEl.onchange = e=>{ SETTINGS.tempo = +e.target.value||84; saveSettings(); };
+
+/* ===== Intervals ===== */
+const INT_SET=["m2","M2","m3","M3","P4","TT","P5","m6","M6","m7","M7","P8"];
+const INT_TO_SEMI={m2:1,M2:2,m3:3,M3:4,P4:5,TT:6,P5:7,m6:8,M6:9,m7:10,M7:11,P8:12};
+let intAns=null, intStartT=null, intCorrect=0, intTotal=0;
+const intBtns=document.getElementById("intBtns");
+INT_SET.forEach(n=>{const b=document.createElement("button"); b.textContent=n; b.className="btn ghost";
+  b.onclick=()=>{ if(!intAns){return;} const ms=performance.now()-intStartT; intTotal++; const ok=(n===intAns);
+    if(ok){ b.classList.add("ok"); setTimeout(()=>b.classList.remove("ok"),350); } else { b.classList.add("bad"); setTimeout(()=>b.classList.remove("bad"),350); }
+    logAttempt("intervals", `int:${n}`, SETTINGS.key, SETTINGS.scale, ok, ms);
+    document.getElementById("intStatus").textContent = ok?"Correct":"Answer: "+intAns;
+    intAns=null; intStartT=null;
+  };
+  intBtns.appendChild(b);
+});
+document.getElementById("playInterval").onclick=()=>{
+  ctx.resume();
+  const dir=document.getElementById("intDir").value;
+  const root=C4; const pick=INT_SET[Math.floor(Math.random()*INT_SET.length)];
+  const semis=INT_TO_SEMI[pick]*(dir==="down"?-1:(dir==="mix"?(Math.random()<0.5?-1:1):1));
+  const t=now(0.05), d=0.42;
+  osc(root,t,d); osc(root*Math.pow(SEMI,semis),t+d+0.13,d);
+  intAns=pick; intStartT=performance.now(); document.getElementById("intStatus").textContent="…";
+};
+
+/* ===== Chords ===== */
+const CHORDS=[["maj",[0,4,7]],["min",[0,3,7]],["dim",[0,3,6]],["aug",[0,4,8]],["7",[0,4,7,10]],["maj7",[0,4,7,11]],["min7",[0,3,7,10]]];
+let chordAns=null, chordStartT=null, chordCorrect=0, chordTotal=0;
+const chordBtns=document.getElementById("chordBtns");
+CHORDS.forEach(([name])=>{
+  const b=document.createElement("button"); b.textContent=name; b.className="btn ghost";
+  b.onclick=()=>{ if(!chordAns){return;} const ms=performance.now()-chordStartT; chordTotal++; const ok=(name===chordAns);
+    if(ok){ b.classList.add("ok"); setTimeout(()=>b.classList.remove("ok"),350); } else { b.classList.add("bad"); setTimeout(()=>b.classList.remove("bad"),350); }
+    logAttempt("chords", `chord:${name}`, SETTINGS.key, SETTINGS.scale, ok, ms);
+    document.getElementById("chordStatus").textContent = ok?"Correct":"Answer: "+chordAns;
+    chordAns=null; chordStartT=null;
+  };
+  chordBtns.appendChild(b);
+});
+document.getElementById("playChord").onclick=()=>{
+  ctx.resume();
+  const [name, semis] = CHORDS[Math.floor(Math.random()*CHORDS.length)];
+  const t=now(0.05), d=0.33;
+  semis.forEach((s,i)=>osc(C4*Math.pow(SEMI,s), t+i*0.16, d));
+  chordAns=name; chordStartT=performance.now(); document.getElementById("chordStatus").textContent="…";
+};
+
+/* ===== Rhythm ===== */
+document.getElementById("playPattern").onclick=()=>{
+  ctx.resume();
+  const meter=document.getElementById("meter").value; const [num,den]=meter.split("/").map(Number);
+  const bpm=84; const beat=60/bpm; let t=now(0.05);
+  for(let i=1;i<=num;i++){ const f=i===1?880:440; osc(f,t,0.05); t+=beat*(4/den); }
+  document.getElementById("rhythmStatus").textContent="Pattern played.";
+};
+
+/* ===== Stats + CSV ===== */
+function summarize(){
+  const out = {degrees:{correct:0,total:0}, intervals:{correct:0,total:0}, chords:{correct:0,total:0}};
+  LOG.forEach(r=>{
+    if(out[r.mode]){ out[r.mode].total++; out[r.mode].correct += r.correct?1:0; }
+  });
+  const acc = m=> out[m].total? Math.round(100*out[m].correct/out[m].total):0;
+  return {out, acc};
+}
+function renderStats(){
+  const {out, acc} = summarize();
+  const totalAll = out.degrees.total + out.intervals.total + out.chords.total;
+  const correctAll = out.degrees.correct + out.intervals.correct + out.chords.correct;
+  const accAll = totalAll? Math.round(100*correctAll/totalAll):0;
+  document.getElementById("statsText").textContent =
+`Totals
+- Degrees:   ${out.degrees.correct}/${out.degrees.total} (${acc("degrees")}%)
+- Intervals: ${out.intervals.correct}/${out.intervals.total} (${acc("intervals")}%)
+- Chords:    ${out.chords.correct}/${out.chords.total} (${acc("chords")}%)
+- Overall:   ${correctAll}/${totalAll} (${accAll}%)
+
+Records: ${LOG.length}
+`;
+}
+document.getElementById("exportCSV").onclick=()=>{
+  if(!LOG.length){ alert("No data to export."); return; }
+  const header = ["timestamp","mode","detail","key","scale","correct","response_ms"];
+  const rows = LOG.map(r=>[r.ts,r.mode,r.detail,r.key,r.scale,r.correct,r.ms]);
+  const csv = [header].concat(rows).map(arr=>arr.map(x=>{
+    const s=String(x??"");
+    return (/[",\n]/.test(s))?('"'+s.replace(/"/g,'""')+'"'):s;
+  }).join(",")).join("\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href=url; a.download="bemol_stats.csv"; a.click();
+  URL.revokeObjectURL(url);
+};
+document.getElementById("resetStats").onclick=()=>{
+  if(!confirm("Clear all saved stats?")) return;
+  LOG=[]; localStorage.removeItem(LS_KEY_LOG); renderStats();
+};
+
+/* Init UI from settings */
+(function init(){
+  keySel.value = SETTINGS.key;
+  scaleSel.value = SETTINGS.scale;
+  tempoEl.value = SETTINGS.tempo;
+  renderDegreeButtons();
+})();
+</script>

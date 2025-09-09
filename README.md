@@ -1,4 +1,35 @@
 # 🎵 Bemol
+
+# 🎵 Bemol Fork
+
+This is a fork of [Bemol](https://github.com/ftchirou/Bemol), an open-source iOS ear-training app based on **Functional Ear Training**.  
+It is licensed under the **GNU GPLv3**.
+
+---
+
+## 🚀 Features
+- Tonal context ear training: I–IV–V–I cadence, then single notes to identify by scale degree.
+- Level system:
+  - Start with 4 notes in C major.
+  - Unlock new notes, accidentals, and keys as accuracy improves.
+- Practice across all major and minor keys.
+- Customizable with your own **SoundFont (.sf2)** for realistic piano playback.
+
+---
+
+## 📥 Installation
+
+### Option 1: Download via AltStore
+1. Install [AltStore](https://altstore.io/) on your iOS device.
+2. Add Bemol’s AltStore source (see [upstream repo](https://github.com/ftchirou/Bemol)).
+3. Install the app directly to your device.
+
+### Option 2: Build from Source
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/kevinskey/bemol-fork.git
+   cd bemol-fork
+
 ![GitHub Workflow Status](https://github.com/ftchirou/Bemol/actions/workflows/run-tests.yml/badge.svg) <img src="https://img.shields.io/badge/coverage-75%25-yellow"> ![GitHub Workflow Status](https://github.com/ftchirou/Bemol/actions/workflows/upload-to-testflight.yml/badge.svg) ![GitHub release (latest SemVer)](https://img.shields.io/github/v/tag/ftchirou/Bemol)  <img src="https://img.shields.io/badge/beta-yellow"> <img src="https://img.shields.io/badge/iOS%2018.2%2B-red"> <img src="https://img.shields.io/badge/Swift%20%3E%3D%206-orange">
 
 **Bemol** is a **free** and **open-source** ear training app that helps music hobbyists and music students train and develop [relative pitch](https://en.wikipedia.org/wiki/Relative_pitch), the ability to recognize a played musical note in a given [tonal context](https://en.wikipedia.org/wiki/Tonic_(music)).

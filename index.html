@@ -1,153 +1,139 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Bemol Web Trainer</title>
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bemol Trainer</title>
 <style>
   body{margin:0;font-family:system-ui,Arial;background:#0C2340;color:#fff}
   header{padding:16px 20px;background:#1D4ED8}
-  h1{margin:0;font-size:22px}
-  main{max-width:800px;margin:0 auto;padding:24px}
-  .row{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
-  button{cursor:pointer;border:0;border-radius:10px;padding:12px 16px;font-weight:700}
+  nav{display:flex;gap:8px;flex-wrap:wrap;padding:10px;background:#111827}
+  button.tab{border:0;border-radius:8px;padding:8px 12px;background:#374151;color:#fff;cursor:pointer}
+  button.tab.active{background:#fff;color:#0C2340;font-weight:700}
+  section{display:none;padding:16px}
+  section.active{display:block}
+  .card{background:#111827;border-radius:12px;padding:16px;margin:12px 0}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .btn{border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
   .primary{background:#fff;color:#0C2340}
-  .ghost{background:#111827;color:#fff}
-  .ok{background:#10B981;color:#081C15}
-  .bad{background:#EF4444;color:#1B0B0B}
-  .card{background:#111827;border-radius:14px;padding:16px}
-  .muted{opacity:.8}
+  .ghost{background:#374151;color:#fff}
 </style>
-</head>
-<body>
-<header><h1>Bemol Web Trainer (Major scale degrees)</h1></header>
-<main>
+<header><h1>Bemol Trainer</h1></header>
+<nav>
+  <button class="tab active" data-t="degrees">Degrees</button>
+  <button class="tab" data-t="intervals">Intervals</button>
+  <button class="tab" data-t="chords">Chords</button>
+  <button class="tab" data-t="rhythm">Rhythm</button>
+  <button class="tab" data-t="stats">Stats</button>
+</nav>
+
+<section id="degrees" class="active">
   <div class="card">
-    <p class="muted">Cadence: I–IV–V–I in selected key, then a single degree (1–7). Identify the degree.</p>
     <div class="row">
-      <label>Key:
-        <select id="keySel">
-          <option>C</option><option>G</option><option>D</option><option>A</option><option>E</option>
-          <option>B</option><option>F#</option><option>Db</option><option>Ab</option><option>Eb</option>
-          <option>Bb</option><option>F</option>
-        </select>
-      </label>
-      <label>Tempo:
-        <input id="tempo" type="number" value="84" min="50" max="160">
-      </label>
-      <button id="start" class="primary">Start / Reset</button>
-      <button id="cadence" class="ghost">Play Cadence</button>
-      <button id="note" class="ghost">Play Note</button>
+      <label>Key <select id="keySel"><option>C</option><option>G</option><option>D</option><option>A</option><option>E</option><option>B</option><option>F#</option><option>Db</option><option>Ab</option><option>Eb</option><option>Bb</option><option>F</option></select></label>
+      <label>Tempo <input id="tempo" type="number" min="50" max="160" value="84"></label>
+      <button class="btn primary" id="cadence">Cadence I–IV–V–I</button>
+      <button class="btn ghost" id="degreeNote">Note</button>
     </div>
-    <div class="row" id="answers"></div>
-    <div class="row">
-      <button id="reveal" class="ghost">Reveal</button>
-      <span id="status" class="muted"></span>
-    </div>
-    <div class="row">
-      <span id="score" class="muted">Score: 0 / 0</span>
-    </div>
+    <div class="row" id="degBtns"></div>
+    <div id="degStatus"></div>
   </div>
-</main>
+</section>
+
+<section id="intervals">
+  <div class="card">
+    <div class="row">
+      <label>Direction <select id="intDir"><option value="up">Up</option><option value="down">Down</option><option value="mix">Mix</option></select></label>
+      <button class="btn primary" id="playInterval">Play Interval</button>
+    </div>
+    <div class="row" id="intBtns"></div>
+    <div id="intStatus"></div>
+  </div>
+</section>
+
+<section id="chords">
+  <div class="card">
+    <div class="row">
+      <button class="btn primary" id="playChord">Play Chord</button>
+    </div>
+    <div class="row" id="chordBtns"></div>
+    <div id="chordStatus"></div>
+  </div>
+</section>
+
+<section id="rhythm">
+  <div class="card">
+    <div class="row">
+      <label>Meter <select id="meter"><option>4/4</option><option>3/4</option><option>6/8</option></select></label>
+      <button class="btn primary" id="playPattern">Play Pattern</button>
+    </div>
+    <p id="rhythmStatus"></p>
+  </div>
+</section>
+
+<section id="stats"><div class="card"><p id="statsText">Accuracy: 0%</p></div></section>
 
 <script>
-(() => {
-  const SEMI = Math.pow(2,1/12);
-  const DEG_TO_SEMI = {1:0, 2:2, 3:4, 4:5, 5:7, 6:9, 7:11};
-  const KEY_TO_SEMI_FROM_C = {C:0,"G":7,"D":2,"A":9,"E":4,"B":11,"F#":6,"Db":1,"Ab":8,"Eb":3,"Bb":10,"F":5};
-  let ctx, master, key="C", tempo=84, currentDeg=null, correct=0, total=0;
+/* Tabs */
+document.querySelectorAll("button.tab").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("button.tab").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
+  b.classList.add("active"); document.getElementById(b.dataset.t).classList.add("active");
+});
 
-  const $ = id => document.getElementById(id);
-  const keySel = $("keySel"), tempoEl = $("tempo"), status = $("status");
-  const score = $("score"), answers = $("answers");
+/* Audio primitives */
+const ctx = new (window.AudioContext||window.webkitAudioContext)();
+const master = ctx.createGain(); master.gain.value=0.12; master.connect(ctx.destination);
+const SEMI = Math.pow(2,1/12);
+const DEG_TO_SEMI = {1:0,2:2,3:4,4:5,5:7,6:9,7:11};
+const KEY_TO_SEMI_FROM_C = {C:0,G:7,D:2,A:9,E:4,B:11,"F#":6,Db:1,Ab:8,Eb:3,Bb:10,F:5};
+const c4 = 261.625565;
+const now = d=>ctx.currentTime + (d||0);
+const osc = (f,t,d)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.type="sine";o.frequency.value=f;g.gain.value=0;o.connect(g).connect(master);g.gain.linearRampToValueAtTime(master.gain.value,t+0.01);g.gain.setTargetAtTime(0.0001,t+d-0.03,0.02);o.start(t);o.stop(t+d+0.05);}
+const freqDeg=(key,deg,oct=4)=> c4 * Math.pow(SEMI, (oct-4)*12 + KEY_TO_SEMI_FROM_C[key] + DEG_TO_SEMI[deg]);
 
-  function initAudio(){
-    if(ctx) return;
-    ctx = new (window.AudioContext || window.webkitAudioContext)();
-    master = ctx.createGain(); master.gain.value = 0.12; master.connect(ctx.destination);
-  }
+/* Degrees */
+let keySel=document.getElementById("keySel"), tempo=document.getElementById("tempo");
+let targetDeg=null, correct=0, total=0;
+document.getElementById("cadence").onclick=()=>{
+  const beat=60/Math.max(50,Math.min(160,+tempo.value||84)); let t=now(0.05);
+  [[1,3,5],[4,6,1],[5,7,2],[1,3,5]].forEach(ch=>{ch.forEach(d=>osc(freqDeg(keySel.value,d,4),t,beat)); t+=beat;});
+};
+document.getElementById("degreeNote").onclick=()=>{
+  if(!targetDeg) targetDeg=1+Math.floor(Math.random()*7);
+  const d=60/Math.max(50,Math.min(160,+tempo.value||84)); osc(freqDeg(keySel.value,targetDeg,4), now(0.05), 0.8*d);
+};
+const degBtns=document.getElementById("degBtns");
+for(let d=1; d<=7; d++){
+  const b=document.createElement("button"); b.textContent=d; b.className="btn primary";
+  b.onclick=()=>{ total++; if(targetDeg===d){correct++; b.style.background="#10B981"; setTimeout(()=>b.style.background="",400);} targetDeg=null; document.getElementById("degStatus").textContent=`Score ${correct}/${total}`; };
+  degBtns.appendChild(b);
+}
 
-  function nowBeat(delayBeats=0){ return ctx.currentTime + (60/tempo)*delayBeats; }
+/* Intervals */
+const INT_SET=["m2","M2","m3","M3","P4","TT","P5","m6","M6","m7","M7","P8"];
+const intBtns=document.getElementById("intBtns");
+INT_SET.forEach(n=>{const b=document.createElement("button"); b.textContent=n; b.className="btn ghost"; b.onclick=()=>checkInt(n); intBtns.appendChild(b);});
+let intAns=null;
+document.getElementById("playInterval").onclick=()=>{
+  const dir=document.getElementById("intDir").value;
+  const root=c4; const pick=INT_SET[Math.floor(Math.random()*INT_SET.length)];
+  const map={m2:1,M2:2,m3:3,M3:4,P4:5,TT:6,P5:7,m6:8,M6:9,m7:10,M7:11,P8:12};
+  const semis=map[pick]*(dir==="down"?-1:(dir==="mix"?(Math.random()<0.5?-1:1):1));
+  const t=now(0.05); osc(root,t,0.4); osc(root*Math.pow(SEMI,semis),t+0.55,0.4); intAns=pick;
+};
+function checkInt(n){ document.getElementById("intStatus").textContent = n===intAns ? "Correct" : `Answer: ${intAns}`; }
 
-  function noteFreqFrom(keyName, degree, octave=4){
-    const semisFromCKey = KEY_TO_SEMI_FROM_C[keyName];
-    const semisFromTonic = DEG_TO_SEMI[degree];
-    const semisTotal = (octave-4)*12 + semisFromCKey + semisFromTonic; // A4=440, C4≈261.63
-    const c4 = 261.625565;
-    return c4 * Math.pow(SEMI, semisTotal);
-  }
+/* Chords */
+const CHORDS=[["maj",[0,4,7]],["min",[0,3,7]],["dim",[0,3,6]],["aug",[0,4,8]],["7",[0,4,7,10]],["maj7",[0,4,7,11]],["min7",[0,3,7,10]]];
+const chordBtns=document.getElementById("chordBtns"); let chordAns=null;
+CHORDS.forEach(([name])=>{const b=document.createElement("button"); b.textContent=name; b.className="btn ghost"; b.onclick=()=>{document.getElementById("chordStatus").textContent = name===chordAns?"Correct":`Answer: ${chordAns}`}; chordBtns.appendChild(b);});
+document.getElementById("playChord").onclick=()=>{
+  const [name, semis] = CHORDS[Math.floor(Math.random()*CHORDS.length)];
+  const t=now(0.05); semis.forEach((s,i)=>osc(c4*Math.pow(SEMI,s), t+i*0.18, 0.35)); chordAns=name;
+};
 
-  function beep(freq, start, dur){
-    const o=ctx.createOscillator(), g=ctx.createGain();
-    o.type="sine"; o.frequency.value=freq;
-    g.gain.setValueAtTime(0, start);
-    g.gain.linearRampToValueAtTime(master.gain.value, start+0.01);
-    g.gain.setTargetAtTime(0.0001, start+dur-0.03, 0.02);
-    o.connect(g).connect(master);
-    o.start(start); o.stop(start+dur+0.05);
-  }
-
-  function chord(degrees, start, dur){
-    degrees.forEach(d => beep(noteFreqFrom(key, d, 4), start, dur));
-  }
-
-  function playCadence(){
-    initAudio();
-    const beat = 60/tempo;
-    let t = nowBeat(0.05/beat);
-    // I
-    chord([1,3,5], t, 1*beat); t += 1*beat;
-    // IV
-    chord([4,6,1], t, 1*beat); t += 1*beat;
-    // V
-    chord([5,7,2], t, 1*beat); t += 1*beat;
-    // I held
-    chord([1,3,5], t, 1.2*beat);
-  }
-
-  function pickDegree(){ // 1..7 uniformly
-    const d = 1 + Math.floor(Math.random()*7);
-    currentDeg = d;
-    status.textContent = "Note queued. Guess the degree.";
-  }
-
-  function playNote(){
-    initAudio();
-    if(currentDeg==null) pickDegree();
-    const t = nowBeat(0.05/(60/tempo));
-    beep(noteFreqFrom(key, currentDeg, 4), t, 0.8*(60/tempo));
-  }
-
-  function guess(d){
-    if(currentDeg==null){ status.textContent="Play a note first."; return; }
-    total++;
-    if(d===currentDeg){ correct++; flash(d,true); status.textContent="Correct."; }
-    else { flash(d,false); status.textContent="Wrong. Try cadence + new note."; }
-    score.textContent = `Score: ${correct} / ${total}`;
-    pickDegree();
-  }
-
-  function flash(d,ok){
-    const btn = document.querySelector(`[data-deg="${d}"]`);
-    btn.classList.add(ok?"ok":"bad");
-    setTimeout(()=>btn.classList.remove("ok","bad"), 400);
-  }
-
-  // UI setup
-  keySel.onchange = e => key = e.target.value;
-  tempoEl.onchange = e => tempo = Math.max(50, Math.min(160, +e.target.value||84));
-  $("start").onclick = () => { initAudio(); correct=0; total=0; score.textContent="Score: 0 / 0"; pickDegree(); status.textContent="Ready."; };
-  $("cadence").onclick = playCadence;
-  $("note").onclick = playNote;
-  $("reveal").onclick = () => { if(currentDeg) status.textContent = `Answer: ${currentDeg}`; };
-
-  // answer buttons
-  for(let d=1; d<=7; d++){
-    const b=document.createElement("button");
-    b.textContent = String(d); b.dataset.deg=d; b.className="primary";
-    b.onclick = () => guess(d);
-    answers.appendChild(b);
-  }
-})();
+/* Rhythm (click track) */
+document.getElementById("playPattern").onclick=()=>{
+  const meter=document.getElementById("meter").value; const [num,den]=meter.split("/").map(Number);
+  const bpm=84; const beat=60/bpm; let t=now(0.05);
+  for(let i=1;i<=num;i++){ const f=i===1?880:440; osc(f,t,0.05); t+=beat*(4/den); }
+  document.getElementById("rhythmStatus").textContent="Pattern played.";
+};
 </script>
-</body>
-</html>

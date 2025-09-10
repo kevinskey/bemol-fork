@@ -1,80 +1,105 @@
+/* Bemol Trainer – upgraded UI */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+
 :root{
-  --bg:#0C2340;          /* navy */
-  --surface:#111827;     /* dark slate */
-  --text:#FFFFFF;
-  --muted:#94A3B8;
-  --accent:#1D4ED8;      /* blue */
-  --accent-2:#60A5FA;    /* light blue */
-  --ok:#10B981;          /* green */
-  --bad:#EF4444;         /* red */
-  --radius:14px;
-  --shadow:0 10px 30px rgba(0,0,0,.3);
+  --bg:#0B1530;          /* deep navy */
+  --bg2:#0C2340;         /* Spelman-ish navy */
+  --surface:rgba(17,24,39,.72);
+  --text:#E6EEF9;
+  --muted:#9BB0C9;
+  --accent:#3B82F6;      /* blue */
+  --accent2:#60A5FA;     /* light blue */
+  --accent3:#A78BFA;     /* violet */
+  --ok:#22C55E;
+  --bad:#EF4444;
+  --radius:16px;
+  --border:1px solid rgba(255,255,255,.08);
+  --shadow:0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.03);
 }
+
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
-  margin:0;
-  font:16px/1.5 ui-sans-serif, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-  color:var(--text);
+  margin:0; color:var(--text);
+  font:16px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   background:
-    radial-gradient(1000px 600px at 85% -200px, rgba(29,78,216,.25), transparent),
-    var(--bg);
+    radial-gradient(1200px 600px at 80% -200px, rgba(59,130,246,.25), transparent),
+    radial-gradient(800px 400px at -10% 120%, rgba(167,139,250,.18), transparent),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg2) 60%);
 }
 
-/* Layout */
-header{padding:18px 20px;background:linear-gradient(90deg,var(--accent),#0a5bd8 60%,transparent)}
-header h1{margin:0;font-size:22px}
-main,section{max-width:1000px;margin:0 auto;padding:16px}
-nav{
+/* Header */
+header{
   position:sticky; top:0; z-index:10;
-  display:flex; gap:8px; flex-wrap:wrap;
-  padding:10px 16px; background:#0B1A34; border-bottom:1px solid rgba(255,255,255,.08)
+  padding:18px 20px;
+  background:linear-gradient(90deg, rgba(59,130,246,.35), rgba(96,165,250,.15), transparent);
+  backdrop-filter:saturate(120%) blur(6px);
+  border-bottom:var(--border);
 }
+header h1{margin:0; font-size:22px; letter-spacing:.4px}
 
 /* Tabs */
+nav{display:flex; gap:8px; flex-wrap:wrap; padding:10px 16px}
 button.tab{
-  background:#374151; color:#fff; border:0; cursor:pointer;
-  border-radius:10px; padding:8px 12px; font-weight:700;
-  transition:transform .06s ease, background .2s ease, color .2s ease
+  position:relative; cursor:pointer; border:0; border-radius:999px;
+  padding:10px 14px; font-weight:700; color:var(--text);
+  background:rgba(255,255,255,.06);
+  transition:transform .06s, box-shadow .2s, background .2s, color .2s;
 }
-button.tab:hover{transform:translateY(-1px)}
-button.tab.active{background:#fff; color:var(--bg)}
+button.tab:hover{transform:translateY(-1px); box-shadow:0 6px 18px rgba(0,0,0,.3)}
+button.tab.active{background:#fff; color:#0C2340}
+button.tab.active::after{
+  content:""; position:absolute; left:50%; transform:translateX(-50%);
+  bottom:-8px; width:60%; height:3px; border-radius:3px;
+  background:linear-gradient(90deg, var(--accent), var(--accent3));
+}
 
-/* Cards */
+/* Sections + cards */
+section{display:none; padding:20px}
+section.active{display:block}
 .card{
-  background:var(--surface); border-radius:var(--radius);
-  padding:18px; box-shadow:var(--shadow); border:1px solid rgba(255,255,255,.06)
+  background:var(--surface); border:var(--border); border-radius:var(--radius);
+  padding:18px; box-shadow:var(--shadow);
 }
-
-/* Controls */
 .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:10px 0}
-label{display:inline-flex; gap:6px; align-items:center; color:var(--muted); font-weight:600}
-input[type="number"], select{
-  appearance:none; -webkit-appearance:none;
-  background:#0F213F; color:#fff; border:1px solid rgba(255,255,255,.15);
-  padding:8px 10px; border-radius:10px; min-width:90px
+label{display:inline-flex; gap:8px; align-items:center; color:var(--muted); font-weight:600}
+select, input[type=number]{
+  appearance:none; background:rgba(255,255,255,.06); color:var(--text);
+  border:var(--border); padding:10px 12px; border-radius:12px; min-width:100px
 }
-input[type="number"]:focus, select:focus, button:focus{outline:0; box-shadow:0 0 0 3px rgba(96,165,250,.45)}
 
 /* Buttons */
 .btn{
-  border:0; border-radius:12px; padding:10px 14px; font-weight:800; cursor:pointer;
-  transition:transform .06s ease, filter .2s ease, background .2s ease, color .2s ease
+  border:0; border-radius:12px; padding:12px 16px; font-weight:800; cursor:pointer;
+  transition:transform .06s, filter .2s, background .25s, color .25s, box-shadow .2s;
 }
 .btn:active{transform:translateY(1px)}
-.primary{background:#fff; color:var(--bg)}
-.ghost{background:#223256; color:#fff}
-a.button{display:inline-block} /* link-styled buttons */
+.primary{background:linear-gradient(180deg,#fff,#E6EEF9); color:#0C2340;
+  box-shadow:0 8px 20px rgba(255,255,255,.08), inset 0 1px 0 rgba(0,0,0,.04)}
+.ghost{background:rgba(255,255,255,.08); color:var(--text); box-shadow:0 8px 20px rgba(0,0,0,.25)}
+.primary:hover{filter:saturate(105%)}
+.ghost:hover{filter:brightness(1.05)}
 
-/* Feedback flashes */
-.ok{background:var(--ok)!important; color:#081C15!important; box-shadow:0 0 0 0 rgba(16,185,129,.6); animation:okFlash .4s ease-out}
-.bad{background:var(--bad)!important; color:#1B0B0B!important; box-shadow:0 0 0 0 rgba(239,68,68,.6); animation:badFlash .4s ease-out}
-@keyframes okFlash{to{box-shadow:0 0 0 24px rgba(16,185,129,0)}}
-@keyframes badFlash{to{box-shadow:0 0 0 24px rgba(239,68,68,0)}}
+/* Answer grids */
+#degBtns, #intBtns, #chordBtns{display:grid; gap:10px}
+#degBtns{grid-template-columns:repeat(7,minmax(64px,1fr))}
+#intBtns{grid-template-columns:repeat(6,minmax(72px,1fr))}
+#chordBtns{grid-template-columns:repeat(4,minmax(84px,1fr))}
 
-/* Status text */
+/* Feedback */
+.ok{background:var(--ok)!important; color:#052e14!important; animation:btnPulse .4s ease-out}
+.bad{background:var(--bad)!important; color:#2e0505!important; animation:btnPulse .4s ease-out}
+@keyframes btnPulse{
+  0%{box-shadow:0 0 0 0 rgba(255,255,255,0)}
+  100%{box-shadow:0 0 0 24px rgba(255,255,255,0)}
+}
+
+/* Status */
 .muted{color:var(--muted)}
 #degStatus,#intStatus,#chordStatus,#rhythmStatus{color:var(--muted); font-weight:700}
+
+/* Focus */
+:focus-visible{outline:3px solid rgba(96,165,250,.5); outline-offset:2px}
 
 /* Small screens */
 @media (max-width:640px){
@@ -82,5 +107,10 @@ a.button{display:inline-block} /* link-styled buttons */
   .btn{padding:10px 12px}
 }
 
-/* Optional footer */
-footer{margin-top:40px;padding:16px;text-align:center;color:var(--muted)}
+/* Optional: music glyphs (upload BravuraText.woff2 next to this file) */
+@font-face{
+  font-family:"BravuraText";
+  src:url("./BravuraText.woff2") format("woff2");
+  font-display:swap;
+}
+.mu{font-family:"BravuraText","Noto Music",ui-sans-serif; font-size:28px; line-height:1}
